@@ -1,24 +1,33 @@
 package com.example.readerapp.feature.stories.ui.adapter
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
 import android.text.Spannable
+import android.text.TextPaint
+import android.text.method.LinkMovementMethod
 import android.text.style.BackgroundColorSpan
+import android.text.style.ClickableSpan
 import android.text.style.ForegroundColorSpan
+import android.text.style.ImageSpan
 import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
-import android.util.Log
 import android.util.TypedValue
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.example.readerapp.R
+import com.example.readerapp.core.navigation.Navigation
 import com.example.readerapp.databinding.PageBinding
+import com.example.readerapp.feature.auth.credentials.Authenticator
 import com.example.readerapp.feature.stories.data.model.Modifier
 import com.example.readerapp.feature.stories.data.model.ModifierName
 import com.example.readerapp.feature.stories.data.model.Page
 import com.example.readerapp.feature.stories.data.model.Query
 import com.example.readerapp.feature.stories.data.model.Story
+import com.example.readerapp.feature.stories.ui.activity.CustomActionMode
 
 class StoryDetailAdapter(
     private val story: Story,
@@ -36,9 +45,16 @@ class StoryDetailAdapter(
     private var textColor: Int? = null
     private var backgroundColor: Int? = null
     private var currentQuery: Query? = null
+    private lateinit var context: Context
+    private lateinit var recyclerView: RecyclerView
+    private val navigation by lazy { Navigation(Authenticator.instance()) }
 
-    class ViewHolder(private val mBinding: PageBinding, private val listener: SelectionListener) :
+    class ViewHolder(
+        private val mBinding: PageBinding,
+        private val listener: SelectionListener,
+    ) :
         RecyclerView.ViewHolder(mBinding.root) {
+
 
         fun bind(page: Page, textSize: Float, textColor: Int?, backgroundColor: Int?) {
             putData(page)
@@ -47,11 +63,13 @@ class StoryDetailAdapter(
             setTextSize(textSize)
             textSelection(page)
             disableSelectionTools()
+            addBookmarkToSelectionToolbar()
         }
 
         private fun putData(page: Page) {
             mBinding.pageBody.text = page.spannableString
             mBinding.pageNumber.text = page.number.toString()
+            mBinding.pageBody.movementMethod = LinkMovementMethod()
         }
 
         private fun setTextColor(page: Page, color: Int?) {
@@ -75,6 +93,7 @@ class StoryDetailAdapter(
 
         private fun textSelection(page: Page) {
             mBinding.pageBody.viewTreeObserver.addOnPreDrawListener {
+
                 mBinding.pageBody.post {
                     val start = mBinding.pageBody.selectionStart
                     val end = mBinding.pageBody.selectionEnd
@@ -96,47 +115,16 @@ class StoryDetailAdapter(
             }
         }
 
-        /*private fun oldTextSelection(page: Page) {
-            mBinding.pageBody.setOnLongClickListener {
-                if (it is TextView) {
-                    it.post {
-                        val start = it.selectionStart
-                        val end = it.selectionEnd
-                        if (start > -1 && end > 0 && start < end) {
-                            val modifier = Modifier(start, end, null)
-                            page.modifiers.add(modifier)
-                            listener.onSelectionListener(page)
-                        } else {
-                            listener.onUnSelectionListener()
-                        }
-                    }
-                }
-                false
-            }
+        private fun addBookmarkToSelectionToolbar() {
+            mBinding.pageBody.customSelectionActionModeCallback = CustomActionMode(listener)
         }
 
-        private fun setTextAlignment(page: Page) {
-            if (page.number != 1) {
-                val params =
-                    CoordinatorLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-                params.gravity = Gravity.TOP
-                mBinding.scrollView.layoutParams = params
-                mBinding.pageBody.gravity = Gravity.START
-            }else{
-                val params =
-                    CoordinatorLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-                params.gravity = Gravity.CENTER
-                mBinding.scrollView.layoutParams = params
-                mBinding.pageBody.gravity = Gravity.START
-            }
-        }*/
+    }
 
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        context = recyclerView.context
+        this.recyclerView = recyclerView
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -149,6 +137,7 @@ class StoryDetailAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+
         holder.bind(pages[position], textSize, textColor, backgroundColor)
     }
 
@@ -267,6 +256,42 @@ class StoryDetailAdapter(
             }
         }
         notifyData()
+    }
+
+    fun bookMark(page: Page, goTo: Any) {
+        // the last modifiers in page.modifiers has the start and end of selection sentence
+        val lastModifier = page.modifiers[page.modifiers.size - 1]
+        // to able to cache the modifiers
+        lastModifier.modifierName = ModifierName.BOOK_MARK
+        page.modifiers[page.modifiers.size - 1] = lastModifier
+        val clickSpan = clickSpan(goTo)
+        val iconSpan = iconSpan()
+        page.spannableString.setSpan(clickSpan, lastModifier.start, lastModifier.end, 0)
+        page.spannableString.setSpan(iconSpan, lastModifier.end, lastModifier.end + 1, 0)
+        notifyData()
+    }
+
+    private fun clickSpan(goTo: Any): ClickableSpan {
+        return object : ClickableSpan() {
+            override fun onClick(p0: View) {
+                if (goTo is Int)
+                    recyclerView.smoothScrollToPosition(goTo)
+                else if (goTo is String) {
+                    navigation.showExternalUrl(goTo, recyclerView.context)
+                }
+            }
+
+            override fun updateDrawState(ds: TextPaint) {
+                super.updateDrawState(ds)
+
+                val color = context.resources.getColor(R.color.link, null)
+                ds.color = color
+            }
+        }
+    }
+
+    private fun iconSpan(): ImageSpan {
+        return ImageSpan(context, R.drawable.external_link)
     }
 
     @SuppressLint("NotifyDataSetChanged")

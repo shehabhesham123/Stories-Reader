@@ -2,9 +2,12 @@ package com.example.readerapp.core.navigation
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.util.Log
 import com.example.readerapp.feature.auth.credentials.Authenticator
 import com.example.readerapp.feature.stories.ui.activity.StoriesActivity
 import com.example.readerapp.feature.stories.ui.activity.StoryDetailsActivity
+
 
 /**
  * this class contains of navigation operations ( intent (explicit, implicit) )
@@ -39,6 +42,12 @@ class Navigation(private val auth: Authenticator) {
         intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
         intent.type = "*/*"
         return intent
+    }
+
+    fun showExternalUrl(url: String, context: Context) {
+        val i = Intent(Intent.ACTION_VIEW)
+        i.setData(Uri.parse(url))
+        context.startActivity(i)
     }
 
 }

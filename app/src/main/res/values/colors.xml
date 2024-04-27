@@ -19,6 +19,7 @@
     <color name="black">#000000</color>
     <color name="blue_light">#D6DFFD</color>
     <color name="dark_grey">#373737</color>
+    <color name="link">#44A1FF</color>
 
     <!-- these colors for color picker  -->
     <color name="positiveButtonTextColor">@color/black</color>
