@@ -144,13 +144,12 @@ class StoryDetailAdapter(
     @SuppressLint("NotifyDataSetChanged")
     fun zoomIn() {
         textSize += 4
-        notifyDataSetChanged()
+        notifyData()
     }
 
-    @SuppressLint("NotifyDataSetChanged")
     fun zoomOut() {
         textSize -= 4
-        notifyDataSetChanged()
+        notifyData()
     }
 
     fun underline(page: Page) {
