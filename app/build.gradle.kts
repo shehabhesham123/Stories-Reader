@@ -41,10 +41,26 @@ android {
 
 dependencies {
 
-    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.core:core-ktx:1.13.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+
+    // to handle different screen size
+    implementation("com.intuit.sdp:sdp-android:1.0.6")
+    implementation("com.intuit.ssp:ssp-android:1.0.6")
+    // because the story is written by json, so we use gson converter to convert the story easily
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    // concurrency, and make the app faster
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+    // color picker
+    implementation("com.github.Dhaval2404:ColorPicker:2.3")
+    // animation images
+    implementation("com.airbnb.android:lottie:3.4.0")
+
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+
+
 }

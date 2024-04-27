@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- these colors for color picker -->
+    <color name="positiveButtonTextColor">@color/black</color>
+    <color name="negativeButtonTextColor">@color/black</color>
+    <color name="bottomSheetDividerColor">@color/black</color>
+
+</resources>
