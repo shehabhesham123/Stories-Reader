@@ -26,6 +26,7 @@ enum class ModifierName {
     CHANGE_SENTENCE_COLOR,
     CHANGE_ALL_TEXT_COLOR,
     CHANGE_BACKGROUND_COLOR,
+    BOOK_MARK,
 }
 
 data class Modifier(val start: Int, val end: Int, var modifierName: ModifierName?)

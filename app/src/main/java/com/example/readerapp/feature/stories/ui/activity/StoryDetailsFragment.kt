@@ -21,6 +21,7 @@ import com.example.readerapp.feature.stories.ui.adapter.SelectionListener
 import com.example.readerapp.feature.stories.ui.adapter.StoryDetailAdapter
 import com.github.dhaval2404.colorpicker.ColorPickerDialog
 import com.github.dhaval2404.colorpicker.model.ColorShape
+import com.google.android.material.snackbar.Snackbar
 
 class StoryDetailsFragment : BaseFragment(), SelectionListener {
     private lateinit var mBinding: FragmentStoryDetailsBinding
@@ -169,7 +170,7 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
-        inflater.inflate(R.menu.menu, menu)
+        inflater.inflate(R.menu.search, menu)
 
         val item = menu.findItem(R.id.search)
         val searchView = item?.actionView as SearchView
@@ -231,6 +232,40 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
 
     override fun onUnSelectionListener() {
         hideTools()
+    }
+
+    override fun clickOnBookmark() {
+        // mSelectionPage should have value
+        var errorMessage = "error"
+        mSelectionPage?.let {
+            errorMessage = if (it.number == 1) {
+                "You can't add bookmark in title"
+            } else if (mStory.pages.size == 2) {
+                "You can't add bookmark because the story have one page only"
+            } else {
+                showBookmarkDialog(it)
+                return
+            }
+        }
+        Snackbar.make(
+            mBinding.root,
+            errorMessage,
+            Snackbar.LENGTH_LONG
+        ).show()
+    }
+
+    private fun showBookmarkDialog(page: Page) {
+        ChoosePageNumberDialog(2, mStory.pages.size)
+            .setOnClickOnPositive { value ->
+                if (value is String) {
+                    // this value if external url
+                    adapter.bookMark(page, value)
+                } else if (value is Int) {
+                    // this value if numberPage
+                    adapter.bookMark(page, value - 1)
+                }
+            }
+            .show(parentFragmentManager, null)
     }
 
     // BaseFragment

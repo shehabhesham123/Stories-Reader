@@ -2,4 +2,11 @@
     <string name="app_name">Stories Reader</string>
     <string name="selectFiles">Select the stories</string>
     <string name="search">Search</string>
+    <string name="bookmark">Add Bookmark\n</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="bookmark2">"Choose page number "</string>
+    <string name="or">Or enter external url</string>
+    <string name="link">External link</string>
+    <string name="copy">Copy</string>
 </resources>
