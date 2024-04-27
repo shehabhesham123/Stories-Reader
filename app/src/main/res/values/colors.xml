@@ -1,10 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+
+    <color name="palette_50">#fefdfb</color>
+    <color name="palette_100">#fbfbf6</color>
+    <color name="palette_200">#f9f8f0</color>
+    <color name="palette_300">#f7f5e9</color>
+    <color name="palette_400">#f5f2e5</color>
+    <color name="palette_500">#f3f0e0</color>
+    <color name="palette_600">#f1eedc</color>
+    <color name="palette_700">#efecd8</color>
+    <color name="palette_800">#ede9d3</color>
+    <color name="palette_900">#eae5cb</color>
+    <color name="palette_A100">#ffffff</color>
+    <color name="palette_A200">#ffffff</color>
+    <color name="palette_A400">#ffffff</color>
+    <color name="palette_A700">#ffffff</color>
+    <color name="white">#ffffff</color>
+    <color name="black">#000000</color>
+    <color name="blue_light">#D6DFFD</color>
+    <color name="dark_grey">#373737</color>
+
+    <!-- these colors for color picker  -->
+    <color name="positiveButtonTextColor">@color/black</color>
+    <color name="negativeButtonTextColor">@color/black</color>
+    <color name="bottomSheetDividerColor">@color/black</color>
+
 </resources>

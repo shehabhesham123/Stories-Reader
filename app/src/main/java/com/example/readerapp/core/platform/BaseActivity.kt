@@ -17,14 +17,14 @@ abstract class BaseActivity : AppCompatActivity() {
         mBinding = BaseActivityBinding.inflate(layoutInflater)
         setContentView(mBinding.root)
 
-        val fragmentManager = supportFragmentManager
+        setSupportActionBar(mBinding.toolbar)
 
-        needToAddFragment(fragmentManager)?.apply {
-            addFragmentToContainer(this, fragmentManager)
+        isNeedToAddFragment(supportFragmentManager)?.apply {
+            addFragmentToContainer(this, supportFragmentManager)
         }
     }
 
-    private fun needToAddFragment(fragmentManager: FragmentManager): Fragment? {
+    private fun isNeedToAddFragment(fragmentManager: FragmentManager): Fragment? {
         val fragment = fragmentManager.findFragmentById(R.id.fragmentContainer)
         return if (fragment != null) null
         else fragment()
@@ -35,6 +35,8 @@ abstract class BaseActivity : AppCompatActivity() {
             .add(R.id.fragmentContainer, fragment)
             .commit()
     }
+
+    fun progressBar() = mBinding.progressBar
 
     abstract fun fragment(): Fragment
 }

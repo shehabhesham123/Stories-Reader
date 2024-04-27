@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">ReaderApp</string>
+    <string name="app_name">Stories Reader</string>
+    <string name="selectFiles">Select the stories</string>
+    <string name="search">Search</string>
 </resources>

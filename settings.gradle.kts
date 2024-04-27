@@ -10,6 +10,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // to implementation "com.github.Dhaval2404:ColorPicker:2.3"
+        maven("https://jitpack.io")
     }
 }
 
