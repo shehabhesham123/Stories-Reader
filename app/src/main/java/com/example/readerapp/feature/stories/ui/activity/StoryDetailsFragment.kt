@@ -241,7 +241,8 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
             errorMessage = if (it.number == 1) {
                 "You can't add bookmark in title"
             } else if (mStory.pages.size == 2) {
-                "You can't add bookmark because the story have one page only"
+                showBookmarkDialog(it,true)
+                return
             } else {
                 showBookmarkDialog(it)
                 return
@@ -254,8 +255,8 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
         ).show()
     }
 
-    private fun showBookmarkDialog(page: Page) {
-        ChoosePageNumberDialog(2, mStory.pages.size)
+    private fun showBookmarkDialog(page: Page,onlyExternal:Boolean = false) {
+        ChoosePageNumberDialog(2, mStory.pages.size,onlyExternal)
             .setOnClickOnPositive { value ->
                 if (value is String) {
                     // this value if external url
