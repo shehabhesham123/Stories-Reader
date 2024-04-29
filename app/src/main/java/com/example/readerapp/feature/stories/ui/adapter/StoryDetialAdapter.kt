@@ -3,6 +3,7 @@ package com.example.readerapp.feature.stories.ui.adapter
 import android.annotation.SuppressLint
 import android.content.Context
 import android.text.method.LinkMovementMethod
+import android.util.Log
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -84,8 +85,20 @@ class StoryDetailAdapter(
                     val start = mBinding.pageBody.selectionStart
                     val end = mBinding.pageBody.selectionEnd
                     if (start > -1 && end > 0 && start < end) {
-                        val modifier = Modifier(start, end, null)
-                        page.modifiers.add(modifier)
+                        val lastModifier = try {
+                            page.modifiers[page.modifiers.size - 1]
+                        } catch (e: IndexOutOfBoundsException) {      // modifiers is empty
+                            null
+                        }
+                        if (lastModifier == null || lastModifier.modifierName != null) {
+                            Log.i("Hello", "1")
+                            val modifier = Modifier(start, end, null, null)
+                            page.modifiers.add(modifier)
+                        } else {
+                            Log.i("Hello", "2")
+                            lastModifier.start = start
+                            lastModifier.end = end
+                        }
                         listener.onSelectionListener(page)
                     } else {
                         listener.onUnSelectionListener()

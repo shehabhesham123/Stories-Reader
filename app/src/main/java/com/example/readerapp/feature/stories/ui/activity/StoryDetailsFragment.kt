@@ -1,5 +1,6 @@
 package com.example.readerapp.feature.stories.ui.activity
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -7,26 +8,40 @@ import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.example.readerapp.R
 import com.example.readerapp.core.interation.UseCase
 import com.example.readerapp.core.platform.BaseFragment
 import com.example.readerapp.core.storage.TempStorage
 import com.example.readerapp.databinding.FragmentStoryDetailsBinding
+import com.example.readerapp.feature.stories.data.model.ModifierList
+import com.example.readerapp.feature.stories.data.model.ModifierPage
 import com.example.readerapp.feature.stories.data.model.Page
 import com.example.readerapp.feature.stories.data.model.Query
 import com.example.readerapp.feature.stories.data.model.Story
+import com.example.readerapp.feature.stories.interation.RetrieveModifiers
+import com.example.readerapp.feature.stories.interation.SaveModifiers
 import com.example.readerapp.feature.stories.ui.adapter.SelectionListener
 import com.example.readerapp.feature.stories.ui.adapter.StoryDetailAdapter
+import com.example.readerapp.feature.stories.ui.viewmodel.StoryDetailsViewModel
+import com.example.readerapp.feature.stories.viewstate.Success
 import com.github.dhaval2404.colorpicker.ColorPickerDialog
 import com.github.dhaval2404.colorpicker.model.ColorShape
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.launch
 
 class StoryDetailsFragment : BaseFragment(), SelectionListener {
     private lateinit var mBinding: FragmentStoryDetailsBinding
     private lateinit var mStory: Story
     private lateinit var adapter: StoryDetailAdapter
+    private lateinit var mStoryDetailViewModel: StoryDetailsViewModel
 
     // this variable will contains the page where the user select the sentence to add modifier on it
     private var mSelectionPage: Page? = null
@@ -39,12 +54,17 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
         // to create option menu to search
         setHasOptionsMenu(true)
 
+        mStoryDetailViewModel = ViewModelProvider(this)[StoryDetailsViewModel::class.java]
+
         val currentStory = TempStorage.instance().currentStory
         if (currentStory == null) {
             onDetach()
         } else {
             mStory = currentStory
         }
+
+        sendAction(RetrieveModifiers(requireContext(), mStory.id))
+        render()
     }
 
     override fun onCreateView(
@@ -173,6 +193,7 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
         inflater.inflate(R.menu.search, menu)
 
         val item = menu.findItem(R.id.search)
+        val save = menu.findItem(R.id.save)
         val searchView = item?.actionView as SearchView
         updateSearchView(searchView)
 
@@ -187,6 +208,16 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
 
         searchView.setOnCloseListener {
             cancelQuery()
+            false
+        }
+
+        save.setOnMenuItemClickListener {
+            val modifierList = ModifierList()
+            for (i in mStory.pages()) {
+                val pageEntity = ModifierPage(i.number, i.modifiers)
+                modifierList.list.add(pageEntity)
+            }
+            sendAction(SaveModifiers(requireContext(), modifierList, mStory.id))
             false
         }
     }
@@ -241,7 +272,7 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
             errorMessage = if (it.number == 1) {
                 "You can't add bookmark in title"
             } else if (mStory.pages().size == 2) {
-                showBookmarkDialog(it,true)
+                showBookmarkDialog(it, true)
                 return
             } else {
                 showBookmarkDialog(it)
@@ -255,8 +286,8 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
         ).show()
     }
 
-    private fun showBookmarkDialog(page: Page,onlyExternal:Boolean = false) {
-        ChoosePageNumberDialog(2, mStory.pages().size,onlyExternal)
+    private fun showBookmarkDialog(page: Page, onlyExternal: Boolean = false) {
+        ChoosePageNumberDialog(2, mStory.pages().size, onlyExternal)
             .setOnClickOnPositive { value ->
                 if (value is String) {
                     // this value if external url
@@ -271,15 +302,39 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
 
     // BaseFragment
     // but here i don't get data
-    override fun sendAction(interaction: UseCase) {}
+    override fun sendAction(interaction: UseCase) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            mStoryDetailViewModel.interactionChannel.send(interaction)
+        }
+    }
 
-    override fun render() {}
+    override fun render() {
+        lifecycleScope.launch {
+            mStoryDetailViewModel.viewStateChannel.consumeAsFlow().buffer().collect {
+                if (it is Success) {
+                    successState(it.data)
+                }
+            }
+        }
+    }
 
     override fun idleState() {}
 
     override fun failureState(message: String) {}
 
-    override fun successState(data: Any) {}
+    @SuppressLint("NotifyDataSetChanged")
+    override fun successState(data: Any) {
+        if (data is String) {
+            // SaveModifiers interaction
+            Toast.makeText(requireContext(), "Success", Toast.LENGTH_SHORT).show()
+        } else {
+            val list = (data as ModifierList).list
+            for (i in list) {
+                mStory.pages()[i.number - 1].applyModifiers(i.modifiers) // base 0
+            }
+            adapter.notifyDataSetChanged()
+        }
+    }
 
     override fun loadingState() {}
 
