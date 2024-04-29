@@ -2,10 +2,7 @@ package com.example.readerapp.feature.stories.ui.adapter
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Color
-import android.text.Spannable
 import android.text.method.LinkMovementMethod
-import android.text.style.BackgroundColorSpan
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -25,7 +22,7 @@ class StoryDetailAdapter(
 ) :
     RecyclerView.Adapter<StoryDetailAdapter.ViewHolder>() {
 
-    private val pages = story.pages
+    private val pages = story.pages()
 
     private var textSize = 16f
         set(value) {
@@ -34,7 +31,6 @@ class StoryDetailAdapter(
 
     private var textColor: Int? = null
     private var backgroundColor: Int? = null
-    private var currentQuery: Query? = null
     private lateinit var context: Context
     private lateinit var recyclerView: RecyclerView
     private val navigation by lazy { Navigation(Authenticator.instance()) }
@@ -177,33 +173,12 @@ class StoryDetailAdapter(
     }
 
     fun query(query: Query) {
-        // cancel the current query then store this query in currentQuery
-        cancelCurrentQuery()
-        this.currentQuery = query
-
-        for (i in query.indices) {
-            val page = i / Page.PAGE_TEXT_SIZE + 1    // because first page for title
-            val start = i % Page.PAGE_TEXT_SIZE
-            val highlightSpan = BackgroundColorSpan(query.highlightColor)
-            pages[page].spannableString.setSpan(
-                highlightSpan,
-                start,
-                start + query.wordSize,
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-        }
+        story.query(query)
         notifyData()
     }
 
     fun cancelCurrentQuery() {
-        currentQuery?.apply {
-            for (i in indices) {
-                val page = i / Page.PAGE_TEXT_SIZE + 1    // because first page for title
-                val start = i % Page.PAGE_TEXT_SIZE
-                val highlightSpan = BackgroundColorSpan(Color.TRANSPARENT)
-                pages[page].spannableString.setSpan(highlightSpan, start, start + wordSize, 0)
-            }
-        }
+        story.cancelCurrentQuery()
         notifyData()
     }
 
