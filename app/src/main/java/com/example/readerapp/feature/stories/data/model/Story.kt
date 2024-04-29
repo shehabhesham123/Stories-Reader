@@ -5,6 +5,7 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.BackgroundColorSpan
 import com.example.readerapp.feature.stories.data.model.Page.Companion.PAGE_TEXT_SIZE
+import com.google.gson.annotations.SerializedName
 import kotlin.math.ceil
 import kotlin.math.min
 
@@ -16,16 +17,29 @@ class Story(title: String, body: String) {
     var body: String = body
         private set
 
+    @SerializedName("titleModifiers")
+    lateinit var titleModifiers: List<Modifier>
+        private set
+
+    @SerializedName("bodyModifiers")
+    lateinit var bodyModifiers: List<Modifier>
+        private set
+
+
+    // no json
     private var pages: MutableList<Page>? = null
 
+    // no json
     private var currentQuery: Query? = null
 
-
     fun pages(): MutableList<Page> {
-        if (this.pages == null) {
+        if (this.pages == null || this.pages!!.isEmpty()) {
             val pages = mutableListOf<Page>()
             // add the story title on first page
-            pages.add(Page(SpannableString(title), 1, mutableListOf()))
+            val titlePage = Page(SpannableString(title), 1, mutableListOf())
+            // apply titleModifiers to this page
+            applyModifiers(titlePage)
+            pages.add(titlePage)
 
             val numOfPages = ceil(body.length / PAGE_TEXT_SIZE.toDouble()).toInt()
             for (i in 0..<numOfPages) {
@@ -38,11 +52,49 @@ class Story(title: String, body: String) {
                 // add \n because tools hide the last lines
                 // i + 2   ---> because the first page for title  (i start by 0)
                 val page = Page(SpannableString(pageBody + "\n\n\n"), i + 2, mutableListOf())
+                // apply bodyModifiers to this page
+                applyModifiers(page)
                 pages.add(page)
             }
             this.pages = pages
         }
         return this.pages!!
+    }
+
+    private fun applyModifiers(page: Page) {
+        if (page.number == 1) {
+            titleModifiers(page)
+        } else {
+            bodyModifiers(page)
+        }
+    }
+
+    private fun titleModifiers(page: Page) {
+        for (i in titleModifiers) {
+            page.modifiers.add(Modifier(i.start, i.end, i.modifierName, i.textColor))
+            when (i.modifierName) {
+                ModifierName.BOLD -> page.bold()
+                ModifierName.UNDERLINE -> page.underline()
+                ModifierName.HIGHLIGHTER -> page.highlighter()
+                ModifierName.CHANGE_SENTENCE_COLOR -> page.changeSentenceColor(i.textColor!!)
+                else -> {}
+            }
+        }
+    }
+
+    private fun bodyModifiers(page: Page) {
+        for (i in bodyModifiers) {
+            val newStart = i.start % PAGE_TEXT_SIZE
+            val newEnd = i.end % PAGE_TEXT_SIZE
+            page.modifiers.add(Modifier(newStart, newEnd, i.modifierName, i.textColor))
+            when (i.modifierName) {
+                ModifierName.BOLD -> page.bold()
+                ModifierName.UNDERLINE -> page.underline()
+                ModifierName.HIGHLIGHTER -> page.highlighter()
+                ModifierName.CHANGE_SENTENCE_COLOR -> page.changeSentenceColor(i.textColor!!)
+                else -> {}
+            }
+        }
     }
 
     fun query(query: Query) {

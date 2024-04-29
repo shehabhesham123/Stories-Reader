@@ -11,6 +11,7 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.ImageSpan
 import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
+import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.example.readerapp.R
@@ -32,12 +33,21 @@ class Page(
         const val PAGE_TEXT_SIZE = 1000   // 1000 letter per page
     }
 
+    fun applyModifiers(modifier: List<Modifier>) {
+        for (i in modifier) {
+            modifiers.add(Modifier(i.start, i.end, i.modifierName, i.textColor))
+            when (i.modifierName) {
+                ModifierName.BOLD -> bold()
+                ModifierName.UNDERLINE -> underline()
+                ModifierName.HIGHLIGHTER -> highlighter()
+                ModifierName.CHANGE_SENTENCE_COLOR -> changeSentenceColor(i.textColor!!)
+                else -> {}
+            }
+        }
+    }
+
     fun underline() {
-        // the last modifiers in page.modifiers has the start and end of selection sentence
-        val lastModifier = modifiers[modifiers.size - 1]
-        // to able to cache the modifiers
-        lastModifier.modifierName = ModifierName.UNDERLINE
-        modifiers[modifiers.size - 1] = lastModifier
+        val lastModifier = updateModifier(ModifierName.UNDERLINE)
         val underlineSpan = underlineSpan()
         spannableString.setSpan(underlineSpan, lastModifier.start, lastModifier.end, 0)
     }
@@ -47,11 +57,7 @@ class Page(
     }
 
     fun highlighter() {
-        // the last modifiers in page.modifiers has the start and end of selection sentence
-        val lastModifier = modifiers[modifiers.size - 1]
-        // to able to cache the modifiers
-        lastModifier.modifierName = ModifierName.HIGHLIGHTER
-        modifiers[modifiers.size - 1] = lastModifier
+        val lastModifier = updateModifier(ModifierName.HIGHLIGHTER)
         val highlightSpan = highlighterSpan(Color.YELLOW)
         spannableString.setSpan(highlightSpan, lastModifier.start, lastModifier.end, 0)
     }
@@ -61,11 +67,7 @@ class Page(
     }
 
     fun bold() {
-        // the last modifiers in page.modifiers has the start and end of selection sentence
-        val lastModifier = modifiers[modifiers.size - 1]
-        // to able to cache the modifiers
-        lastModifier.modifierName = ModifierName.BOLD
-        modifiers[modifiers.size - 1] = lastModifier
+        val lastModifier = updateModifier(ModifierName.BOLD)
         val boldSpan = boldSpan()
         spannableString.setSpan(boldSpan, lastModifier.start, lastModifier.end, 0)
     }
@@ -75,11 +77,9 @@ class Page(
     }
 
     fun changeSentenceColor(color: Int) {
-        // the last modifiers in page.modifiers has the start and end of selection sentence
-        val lastModifier = modifiers[modifiers.size - 1]
-        // to able to cache the modifiers
-        lastModifier.modifierName = ModifierName.CHANGE_SENTENCE_COLOR
-        modifiers[modifiers.size - 1] = lastModifier
+        Log.i("HelloColor", "$color")
+        val lastModifier = updateModifier(ModifierName.CHANGE_SENTENCE_COLOR)
+        lastModifier.textColor = color
         val foregroundSpan = foregroundColorSpan(color)
         spannableString.setSpan(foregroundSpan, lastModifier.start, lastModifier.end, 0)
     }
@@ -88,12 +88,17 @@ class Page(
         return ForegroundColorSpan(color)
     }
 
-    fun bookMark(recyclerView: RecyclerView, navigation: Navigation, goTo: Any) {
+    private fun updateModifier(modifierName: ModifierName): Modifier {
         // the last modifiers in page.modifiers has the start and end of selection sentence
         val lastModifier = modifiers[modifiers.size - 1]
         // to able to cache the modifiers
-        lastModifier.modifierName = ModifierName.BOOK_MARK
+        lastModifier.modifierName = modifierName
         modifiers[modifiers.size - 1] = lastModifier
+        return lastModifier
+    }
+
+    fun bookMark(recyclerView: RecyclerView, navigation: Navigation, goTo: Any) {
+        val lastModifier = updateModifier(ModifierName.BOOK_MARK)
         val clickSpan = clickSpan(recyclerView, navigation, goTo)
         val iconSpan = iconSpan(recyclerView.context)
         spannableString.setSpan(clickSpan, lastModifier.start, lastModifier.end, 0)
@@ -126,15 +131,3 @@ class Page(
         return ImageSpan(context, R.drawable.external_link)
     }
 }
-
-enum class ModifierName {
-    HIGHLIGHTER,
-    BOLD,
-    UNDERLINE,
-    CHANGE_SENTENCE_COLOR,
-    CHANGE_ALL_TEXT_COLOR,
-    CHANGE_BACKGROUND_COLOR,
-    BOOK_MARK,
-}
-
-data class Modifier(val start: Int, val end: Int, var modifierName: ModifierName?)

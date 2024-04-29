@@ -12,6 +12,5 @@
         android:id="@+id/save"
         android:icon="@drawable/save"
         android:title="@string/save"
-        android:visible="false"
         app:showAsAction="always" />
 </menu>

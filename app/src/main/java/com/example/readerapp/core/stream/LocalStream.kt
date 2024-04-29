@@ -42,13 +42,11 @@ class LocalStream private constructor() {
     }
 
     suspend fun writeFile(
-        fileName: String,
-        folder: File?,
+        file: File?,
         fileContent: String,
         append: Boolean
     ): File? {
-        return if (folder != null && folder.isDirectory) {
-            val file = File(folder, fileName)
+        return if (file != null) {
             try {
                 FileOutputStream(file, append).use { fileOutputStream ->
                     fileOutputStream.write(fileContent.toByteArray())
@@ -73,6 +71,17 @@ class LocalStream private constructor() {
     suspend fun readFileContent(file: File?): String {
         val stringBuilder = StringBuilder()
         BufferedReader(FileReader(file)).use { reader ->
+            var line: String?
+            while (reader.readLine().also { line = it } != null) {
+                stringBuilder.append(line).append("\n")
+            }
+        }
+        return stringBuilder.toString()
+    }
+
+    suspend fun readFileContent(filePath: String): String {
+        val stringBuilder = StringBuilder()
+        BufferedReader(FileReader(filePath)).use { reader ->
             var line: String?
             while (reader.readLine().also { line = it } != null) {
                 stringBuilder.append(line).append("\n")
