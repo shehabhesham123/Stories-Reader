@@ -9,4 +9,5 @@
     <string name="or">Or enter external url</string>
     <string name="link">External link</string>
     <string name="copy">Copy</string>
+    <string name="save">Save</string>
 </resources>

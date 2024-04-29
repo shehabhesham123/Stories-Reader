@@ -3,6 +3,7 @@ package com.example.readerapp.core.stream
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
+import android.util.Log
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
@@ -40,7 +41,7 @@ class LocalStream private constructor() {
         return null
     }
 
-    suspend fun createFile(
+    suspend fun writeFile(
         fileName: String,
         folder: File?,
         fileContent: String,
@@ -60,6 +61,15 @@ class LocalStream private constructor() {
         } else null
     }
 
+    fun getFile(
+        fileName: String,
+        folder: File?
+    ): File? {
+        return if (folder != null && folder.isDirectory) {
+            File(folder, fileName)
+        } else null
+    }
+
     suspend fun readFileContent(file: File?): String {
         val stringBuilder = StringBuilder()
         BufferedReader(FileReader(file)).use { reader ->
@@ -74,6 +84,7 @@ class LocalStream private constructor() {
     suspend fun readFileContent(context: Context, file: Uri?): String? {
         val stringBuilder = StringBuilder()
         return if (file != null) {
+            if (getFileExtension(file.path!!) != ".json") return null
             context.contentResolver.openInputStream(file).use { inputStream ->
                 BufferedReader(InputStreamReader(inputStream!!)).use { reader ->
                     var line: String?
@@ -94,5 +105,15 @@ class LocalStream private constructor() {
 
     private fun isExternalStorageWritable(): Boolean {
         return Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED
+    }
+
+    fun getFileExtension(filePath: String): String {
+        var extension = ""
+        try {
+            extension = filePath.substring(filePath.lastIndexOf("."))
+        } catch (exception: Exception) {
+            Log.i("Error", extension)
+        }
+        return extension
     }
 }
