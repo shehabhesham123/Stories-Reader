@@ -77,7 +77,6 @@ class Page(
     }
 
     fun changeSentenceColor(color: Int) {
-        Log.i("HelloColor", "$color")
         val lastModifier = updateModifier(ModifierName.CHANGE_SENTENCE_COLOR)
         lastModifier.textColor = color
         val foregroundSpan = foregroundColorSpan(color)
