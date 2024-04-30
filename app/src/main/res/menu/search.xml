@@ -13,4 +13,10 @@
         android:icon="@drawable/save"
         android:title="@string/save"
         app:showAsAction="always" />
+
+    <item
+        android:id="@+id/speech"
+        android:icon="@drawable/speech"
+        android:title="@string/speech"
+        app:showAsAction="always" />
 </menu>

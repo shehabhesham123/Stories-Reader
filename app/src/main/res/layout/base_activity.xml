@@ -25,7 +25,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="-6dp"
             android:indeterminate="true"
-            android:indeterminateTint="@color/palette_900"
+            android:indeterminateTint="@color/yellow_500"
             android:visibility="gone" />
 
     </com.google.android.material.appbar.AppBarLayout>

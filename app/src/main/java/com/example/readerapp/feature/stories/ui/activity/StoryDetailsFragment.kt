@@ -2,9 +2,12 @@ package com.example.readerapp.feature.stories.ui.activity
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.speech.tts.UtteranceProgressListener
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -18,6 +21,7 @@ import com.example.readerapp.core.interation.UseCase
 import com.example.readerapp.core.platform.BaseFragment
 import com.example.readerapp.core.storage.TempStorage
 import com.example.readerapp.databinding.FragmentStoryDetailsBinding
+import com.example.readerapp.feature.speech.Speech
 import com.example.readerapp.feature.stories.data.model.ModifierList
 import com.example.readerapp.feature.stories.data.model.ModifierPage
 import com.example.readerapp.feature.stories.data.model.Page
@@ -32,16 +36,22 @@ import com.example.readerapp.feature.stories.viewstate.Success
 import com.github.dhaval2404.colorpicker.ColorPickerDialog
 import com.github.dhaval2404.colorpicker.model.ColorShape
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 
+
+@OptIn(DelicateCoroutinesApi::class)
 class StoryDetailsFragment : BaseFragment(), SelectionListener {
     private lateinit var mBinding: FragmentStoryDetailsBinding
     private lateinit var mStory: Story
     private lateinit var adapter: StoryDetailAdapter
     private lateinit var mStoryDetailViewModel: StoryDetailsViewModel
+    private lateinit var speechButton: MenuItem
+    private var textToSpeech: Speech? = null
 
     // this variable will contains the page where the user select the sentence to add modifier on it
     private var mSelectionPage: Page? = null
@@ -53,6 +63,7 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
         super.onCreate(savedInstanceState)
         // to create option menu to search
         setHasOptionsMenu(true)
+
 
         mStoryDetailViewModel = ViewModelProvider(this)[StoryDetailsViewModel::class.java]
 
@@ -79,6 +90,7 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
         super.onViewCreated(view, savedInstanceState)
 
         initializeViewPager()
+        initializeTextSpeech()
 
         listeners()
 
@@ -87,6 +99,38 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
     private fun initializeViewPager() {
         adapter = StoryDetailAdapter(mStory, this)
         mBinding.viewPager.adapter = adapter
+    }
+
+    private fun initializeTextSpeech() {
+        textToSpeech = Speech(requireContext())
+        textToSpeech!!.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {
+                if (utteranceId.equals("uniqueId")) {
+                    GlobalScope.launch(Dispatchers.Main) {
+                        hideProgress()
+                    }
+                }
+            }
+
+            override fun onDone(utteranceId: String?) {
+                if (utteranceId.equals("uniqueId")) {
+                    GlobalScope.launch(Dispatchers.Main) {
+                        hideProgress()
+                        speechButton.isEnabled = true
+                    }
+                }
+            }
+
+            @Deprecated("Deprecated in Java")
+            override fun onError(utteranceId: String?) {
+                if (utteranceId.equals("uniqueId")) {
+                    GlobalScope.launch(Dispatchers.Main) {
+                        hideProgress()
+                        speechButton.isEnabled = true
+                    }
+                }
+            }
+        })
     }
 
     private fun listeners() {
@@ -194,6 +238,7 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
 
         val item = menu.findItem(R.id.search)
         val save = menu.findItem(R.id.save)
+        speechButton = menu.findItem(R.id.speech)
         val searchView = item?.actionView as SearchView
         updateSearchView(searchView)
 
@@ -220,6 +265,18 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
             sendAction(SaveModifiers(requireContext(), modifierList, mStory.id))
             false
         }
+
+        speechButton.setOnMenuItemClickListener {
+            loadingState()
+            speechButton.isEnabled = false
+            speech()
+            false
+        }
+    }
+
+    private fun speech() {
+        val currentPage = mStory.pages()[mBinding.viewPager.currentItem]
+        textToSpeech?.startSpeech(currentPage.spannableString.toString())
     }
 
     private fun updateSearchView(searchView: SearchView) {
@@ -232,6 +289,7 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
     }
 
     private fun showTools() {
+        Log.i("Hello", "$isToolVisible")
         if (!isToolVisible) {
             isToolVisible = true
             mBinding.tools.bold.visibility = View.VISIBLE
@@ -336,6 +394,14 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
         }
     }
 
-    override fun loadingState() {}
+    override fun loadingState() {
+        showProgress()
+    }
+
+    override fun onStop() {
+        textToSpeech?.stopSpeech()
+        super.onStop()
+    }
+
 
 }
