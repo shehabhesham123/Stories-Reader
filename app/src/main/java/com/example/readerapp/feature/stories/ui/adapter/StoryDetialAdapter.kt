@@ -54,7 +54,7 @@ class StoryDetailAdapter(
         }
 
         private fun putData(page: Page) {
-            mBinding.pageBody.text = page.spannableString
+            mBinding.pageBody.text = page.mss.spannableString
             mBinding.pageNumber.text = page.number.toString()
             mBinding.pageBody.movementMethod = LinkMovementMethod()
         }
@@ -62,7 +62,7 @@ class StoryDetailAdapter(
         private fun setTextColor(page: Page, color: Int?) {
             if (page.number == 1) {
                 // that's mean that this page contain title, and the title don't apply to change text color
-                mBinding.pageBody.text = page.spannableString
+                mBinding.pageBody.text = page.mss.spannableString
             } else {
                 color?.let {
                     mBinding.pageBody.setTextColor(it)
@@ -84,16 +84,17 @@ class StoryDetailAdapter(
                 mBinding.pageBody.post {
                     val start = mBinding.pageBody.selectionStart
                     val end = mBinding.pageBody.selectionEnd
+                    val mss = page.mss
                     if (start > -1 && end > 0 && start < end) {
                         val lastModifier = try {
-                            page.modifiers[page.modifiers.size - 1]
+                            mss.modifiers[mss.modifiers.size - 1]
                         } catch (e: IndexOutOfBoundsException) {      // modifiers is empty
                             null
                         }
                         if (lastModifier == null || lastModifier.modifierName != null) {
                             Log.i("Hello", "1")
                             val modifier = Modifier(start, end, null, null)
-                            page.modifiers.add(modifier)
+                            mss.modifiers.add(modifier)
                         } else {
                             Log.i("Hello", "2")
                             lastModifier.start = start
@@ -152,25 +153,25 @@ class StoryDetailAdapter(
     }
 
     fun underline(page: Page) {
-        page.underline()
+        page.mss.underline()
         listener.onUnSelectionListener()
         notifyData()
     }
 
     fun highlighter(page: Page) {
-        page.highlighter()
+        page.mss.highlighter()
         listener.onUnSelectionListener()
         notifyData()
     }
 
     fun bold(page: Page) {
-        page.bold()
+        page.mss.bold()
         listener.onUnSelectionListener()
         notifyData()
     }
 
     fun changeSentenceColor(page: Page, color: Int) {
-        page.changeSentenceColor(color)
+        page.mss.changeSentenceColor(color)
         listener.onUnSelectionListener()
         notifyData()
     }
@@ -196,7 +197,7 @@ class StoryDetailAdapter(
     }
 
     fun bookMark(page: Page, goTo: Any) {
-        page.bookMark(recyclerView, navigation, goTo)
+        page.mss.bookMark(recyclerView, navigation, goTo)
         notifyData()
     }
 

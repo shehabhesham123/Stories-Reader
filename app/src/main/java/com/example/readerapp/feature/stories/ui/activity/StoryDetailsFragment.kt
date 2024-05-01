@@ -259,7 +259,7 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
         save.setOnMenuItemClickListener {
             val modifierList = ModifierList()
             for (i in mStory.pages()) {
-                val pageEntity = ModifierPage(i.number, i.modifiers)
+                val pageEntity = ModifierPage(i.number, i.mss.modifiers)
                 modifierList.list.add(pageEntity)
             }
             sendAction(SaveModifiers(requireContext(), modifierList, mStory.id))
@@ -276,7 +276,7 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
 
     private fun speech() {
         val currentPage = mStory.pages()[mBinding.viewPager.currentItem]
-        textToSpeech?.startSpeech(currentPage.spannableString.toString())
+        textToSpeech?.startSpeech(currentPage.mss.spannableString.toString())
     }
 
     private fun updateSearchView(searchView: SearchView) {
@@ -388,7 +388,7 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
         } else {
             val list = (data as ModifierList).list
             for (i in list) {
-                mStory.pages()[i.number - 1].applyModifiers(i.modifiers) // base 0
+                mStory.pages()[i.number - 1].mss.applyModifiers(i.modifiers) // base 0
             }
             adapter.notifyDataSetChanged()
         }

@@ -5,6 +5,7 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.BackgroundColorSpan
 import com.example.readerapp.feature.stories.data.model.Page.Companion.PAGE_TEXT_SIZE
+import com.example.readerapp.feature.stories.ui.ModifierSpannableString
 import com.google.gson.annotations.SerializedName
 import kotlin.math.ceil
 import kotlin.math.min
@@ -36,7 +37,8 @@ class Story(title: String, body: String) {
         if (this.pages == null || this.pages!!.isEmpty()) {
             val pages = mutableListOf<Page>()
             // add the story title on first page
-            val titlePage = Page(SpannableString(title), 1, mutableListOf())
+            var mss = ModifierSpannableString(SpannableString(title), mutableListOf())
+            val titlePage = Page(mss, 1)
             // apply titleModifiers to this page
             applyModifiers(titlePage)
             pages.add(titlePage)
@@ -51,7 +53,8 @@ class Story(title: String, body: String) {
                 }
                 // add \n because tools hide the last lines
                 // i + 2   ---> because the first page for title  (i start by 0)
-                val page = Page(SpannableString(pageBody + "\n\n\n"), i + 2, mutableListOf())
+                mss = ModifierSpannableString(SpannableString(pageBody + "\n\n\n"), mutableListOf())
+                val page = Page(mss, i + 2)
                 // apply bodyModifiers to this page
                 applyModifiers(page)
                 pages.add(page)
@@ -71,12 +74,13 @@ class Story(title: String, body: String) {
 
     private fun titleModifiers(page: Page) {
         for (i in titleModifiers) {
-            page.modifiers.add(Modifier(i.start, i.end, i.modifierName, i.textColor))
+            val mss = page.mss
+            mss.modifiers.add(Modifier(i.start, i.end, i.modifierName, i.textColor))
             when (i.modifierName) {
-                ModifierName.BOLD -> page.bold()
-                ModifierName.UNDERLINE -> page.underline()
-                ModifierName.HIGHLIGHTER -> page.highlighter()
-                ModifierName.CHANGE_SENTENCE_COLOR -> page.changeSentenceColor(i.textColor!!)
+                ModifierName.BOLD -> mss.bold()
+                ModifierName.UNDERLINE -> mss.underline()
+                ModifierName.HIGHLIGHTER -> mss.highlighter()
+                ModifierName.CHANGE_SENTENCE_COLOR -> mss.changeSentenceColor(i.textColor!!)
                 else -> {}
             }
         }
@@ -84,14 +88,15 @@ class Story(title: String, body: String) {
 
     private fun bodyModifiers(page: Page) {
         for (i in bodyModifiers) {
+            val mss = page.mss
             val newStart = i.start % PAGE_TEXT_SIZE
             val newEnd = i.end % PAGE_TEXT_SIZE
-            page.modifiers.add(Modifier(newStart, newEnd, i.modifierName, i.textColor))
+            mss.modifiers.add(Modifier(newStart, newEnd, i.modifierName, i.textColor))
             when (i.modifierName) {
-                ModifierName.BOLD -> page.bold()
-                ModifierName.UNDERLINE -> page.underline()
-                ModifierName.HIGHLIGHTER -> page.highlighter()
-                ModifierName.CHANGE_SENTENCE_COLOR -> page.changeSentenceColor(i.textColor!!)
+                ModifierName.BOLD -> mss.bold()
+                ModifierName.UNDERLINE -> mss.underline()
+                ModifierName.HIGHLIGHTER -> mss.highlighter()
+                ModifierName.CHANGE_SENTENCE_COLOR -> mss.changeSentenceColor(i.textColor!!)
                 else -> {}
             }
         }
@@ -106,7 +111,7 @@ class Story(title: String, body: String) {
             val page = i / PAGE_TEXT_SIZE + 1    // because first page for title
             val start = i % PAGE_TEXT_SIZE
             val highlightSpan = BackgroundColorSpan(query.highlightColor)
-            pages()[page].spannableString.setSpan(
+            pages()[page].mss.spannableString.setSpan(
                 highlightSpan,
                 start,
                 start + query.wordSize,
@@ -121,7 +126,12 @@ class Story(title: String, body: String) {
                 val page = i / PAGE_TEXT_SIZE + 1    // because first page for title
                 val start = i % PAGE_TEXT_SIZE
                 val highlightSpan = BackgroundColorSpan(Color.TRANSPARENT)
-                pages()[page].spannableString.setSpan(highlightSpan, start, start + wordSize, 0)
+                pages()[page].mss.spannableString.setSpan(
+                    highlightSpan,
+                    start,
+                    start + wordSize,
+                    0
+                )
             }
         }
     }
