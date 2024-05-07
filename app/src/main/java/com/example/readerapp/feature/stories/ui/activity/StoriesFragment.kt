@@ -3,6 +3,7 @@ package com.example.readerapp.feature.stories.ui.activity
 import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -34,19 +35,26 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 
+@OptIn(DelicateCoroutinesApi::class)
 class StoriesFragment : BaseFragment(), StoryListener {
 
     private lateinit var mBinding: FragmentStoriesBinding
     private lateinit var mActivityResultForGetContent: ActivityResultLauncher<Intent>
     private lateinit var mStoriesViewModel: StoriesViewModel
-    private val mNavigation by lazy { Navigation(Authenticator.instance()) }
+    private val mNavigation by lazy { Navigation(Authenticator(requireContext())) }
+
+    // stories variable for adapter
     private val stories: MutableList<Story> = mutableListOf()
+
+    private var isPermissionGrant = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        initializeActivityResultLauncher()
         mStoriesViewModel = ViewModelProvider(this)[StoriesViewModel::class.java]
+
+        requestPermissions()
+        initializeActivityResultLauncherForGetContents()
     }
 
     override fun onCreateView(
@@ -61,6 +69,7 @@ class StoriesFragment : BaseFragment(), StoryListener {
         super.onViewCreated(view, savedInstanceState)
 
         initializeRecyclerView()
+
         render()
 
         // listeners
@@ -69,14 +78,51 @@ class StoriesFragment : BaseFragment(), StoryListener {
         }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
+    private fun requestPermissions() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            permission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
+    }
+
+    private fun permission(permissionName: String) {
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+            isPermissionGrant = isPermissionGrant && it
+        }.launch(permissionName)
+    }
+
+    private fun initializeActivityResultLauncherForGetContents() {
+        mActivityResultForGetContent =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                if (it.resultCode == RESULT_OK) {
+                    val filesUri = getFilesUri(it.data)
+                    val interaction = GetStories(requireContext(), filesUri)
+                    sendAction(interaction)
+                }
+            }
+    }
+
+    private fun getFilesUri(intent: Intent?): MutableList<Uri> {
+        val filesUri = mutableListOf<Uri>()
+        // if intent?.clipData not equal null so the user select more than one story
+        // else the user select only one story
+        intent?.clipData?.apply {
+            if (itemCount != 0) {
+                for (i in 0..<itemCount) {
+                    filesUri.add(getItemAt(i).uri)
+                }
+            }
+        }
+        // if filesUri.isEmpty()  ---> that's mean that intent?.clipData is null, and the user select one story
+        if (filesUri.isEmpty() && intent?.data != null) filesUri.add(intent.data!!)
+        return filesUri
+    }
+
     override fun sendAction(interaction: UseCase) {
         GlobalScope.launch(Dispatchers.IO) {
             mStoriesViewModel.interactionChannel.send(interaction)
         }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     override fun render() {
         GlobalScope.launch(Dispatchers.Main) {
             mStoriesViewModel.viewStateChannel.consumeAsFlow().buffer().collect {
@@ -114,33 +160,6 @@ class StoriesFragment : BaseFragment(), StoryListener {
         mBinding.recyclerView.visibility = if (isIdle) View.GONE else View.VISIBLE
     }
 
-    private fun initializeActivityResultLauncher() {
-        mActivityResultForGetContent =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                if (it.resultCode == RESULT_OK) {
-                    val filesUri = getFilesUri(it.data)
-                    val interaction = GetStories(requireContext(), filesUri)
-                    sendAction(interaction)
-                }
-            }
-    }
-
-    private fun getFilesUri(intent: Intent?): MutableList<Uri> {
-        val filesUri = mutableListOf<Uri>()
-        // if intent?.clipData not equal null so the user select more than one story
-        // else the user select only one story
-        intent?.clipData?.apply {
-            if (itemCount != 0) {
-                for (i in 0..<itemCount) {
-                    filesUri.add(getItemAt(i).uri)
-                }
-            }
-        }
-        // if filesUri.isEmpty()  ---> that's mean that intent?.clipData is null, and the user select one story
-        if (filesUri.isEmpty() && intent?.data != null) filesUri.add(intent.data!!)
-        return filesUri
-    }
-
     private fun initializeRecyclerView() {
         mBinding.recyclerView.hasFixedSize()
         mBinding.recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
@@ -148,11 +167,12 @@ class StoriesFragment : BaseFragment(), StoryListener {
     }
 
     private fun startContentIntent() {
-        mActivityResultForGetContent.launch(mNavigation.getContentIntent())
+        if (isPermissionGrant)
+            mActivityResultForGetContent.launch(mNavigation.getContentIntent())
     }
 
     private fun goToStoryDetailsActivity() {
-        mNavigation.showStoryDetails(requireContext())
+        mNavigation.showStoryDetails(requireContext(), false)
     }
 
     // StoryListener

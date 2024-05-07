@@ -8,9 +8,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.example.readerapp.databinding.BookmarkDialogBinding
 
-class ChoosePageNumberDialog(
+class BookMarkDialog(
     private val mnNumber: Int,
     private val mxNumber: Int,
+    private val currentPage: Int,
     private val onlyExternal: Boolean
 ) :
     DialogFragment() {
@@ -20,6 +21,7 @@ class ChoosePageNumberDialog(
         val view = BookmarkDialogBinding.inflate(LayoutInflater.from(requireContext()), null, false)
 
         if (onlyExternal) {
+            showToast("You can't enter the page number, only the url can enter it")
             view.numberPicker.isEnabled = false
         } else {
             view.numberPicker.maxValue = mxNumber
@@ -29,21 +31,29 @@ class ChoosePageNumberDialog(
         view.ok.setOnClickListener {
             val url = view.externalLink.text.toString().trim()
             if (onlyExternal) {
-                showToast("You can't enter the page number, only the url can enter it")
-                if (url.isNotEmpty() && (url.contains("http://") || url.contains("https://"))) {
+                if (url.isNotEmpty() && (url.startsWith("http://") || url.startsWith("https://"))) {
                     clickListener(url)
                     dismiss()
+                } else {
+                    showToast("Your url must started with http:// or https://")
                 }
             } else {
                 val value =
-                    if (url.isNotEmpty() && (url.contains("http://") || url.contains("https://"))) {
+                    if (url.isNotEmpty() && (url.startsWith("http://") || url.startsWith("https://"))) {
                         url
                     } else {
                         showToast("You entered the page number, not the url")
-                        view.numberPicker.value
+                        val v = view.numberPicker.value
+                        if (v == currentPage) {
+                            showToast("You Can't choose same page")
+                            null
+                        }
+                        else v
                     }
-                clickListener(value)
-                dismiss()
+                if (value != null) {
+                    clickListener(value)
+                    dismiss()
+                }
             }
 
         }
@@ -59,12 +69,12 @@ class ChoosePageNumberDialog(
         Toast.makeText(
             requireContext(),
             message,
-            Toast.LENGTH_SHORT
+            Toast.LENGTH_LONG
         ).show()
     }
 
     // fluent interface
-    fun setOnClickOnPositive(clickListener: (value: Any) -> Unit): ChoosePageNumberDialog {
+    fun setOnClickOnPositive(clickListener: (value: Any) -> Unit): BookMarkDialog {
         this.clickListener = clickListener
         return this
     }

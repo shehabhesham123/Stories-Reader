@@ -3,6 +3,11 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!-- permissions for files reader and writer -->
+
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false" />
+
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
@@ -16,7 +21,7 @@
 
     <!-- permissions for textToSpeech -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -47,6 +52,18 @@
             android:name=".feature.stories.ui.activity.StoryDetailsActivity"
             android:exported="false"
             android:parentActivityName=".feature.stories.ui.activity.StoriesActivity" />
+
+        <activity
+            android:name=".feature.login.ui.LoginActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".feature.login.ui.RegisterActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".feature.login.ui.SubscribeActivity"
+            android:exported="false" />
 
     </application>
 

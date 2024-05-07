@@ -11,4 +11,26 @@
     <string name="copy">Copy</string>
     <string name="save">Save</string>
     <string name="speech">Speech</string>
+
+    <!-- Login Fragment-->
+    <string name="Email">Email</string>
+    <string name="Password">password</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="Login">Login</string>
+    <string name="SignUp">"Don\'t have an account?  Sign up"</string>
+    <string name="WelcomeBack">Welcome Back</string>
+    <string name="sentence5">Sign in to your account</string>
+
+    <string name="SignUp_tv">Sign Up</string>
+    <string name="SignUp_tv_text">Create account and read favorite story</string>
+    <string name="SignUp_bt_Register">Register </string>
+    <string name="SignUp_bt_Register2">Send code </string>
+    <string name="HaveAccount">"Have an account?  Sign In"</string>
+    <string name="terms">By clicking Register, you agree to our\n Terms and Date Policy </string>
+    <string name="phone">Phone number</string>
+    <string name="hint">______</string>
+    <string name="welcome">"Welcome to\n Stories Reader app"</string>
+    <string name="google">Sign in with google</string>
+    <string name="Email2">Sign in with an email</string>
+
 </resources>

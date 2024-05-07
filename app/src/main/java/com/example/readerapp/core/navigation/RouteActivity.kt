@@ -8,9 +8,10 @@ import com.example.readerapp.feature.auth.credentials.Authenticator
  * launcher activity which specifies going to Login activity or main activity
  */
 class RouteActivity : AppCompatActivity() {
-    private val navigation by lazy { Navigation(Authenticator.instance()) }
+    private lateinit var navigation: Navigation
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        navigation = Navigation(Authenticator(baseContext))
 
         navigation.showMain(baseContext)
         finish()
