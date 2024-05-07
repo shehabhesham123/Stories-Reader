@@ -11,6 +11,7 @@
     <color name="palette_700">#efecd8</color>
     <color name="palette_800">#ede9d3</color>
     <color name="palette_900">#eae5cb</color>
+    <color name="palette_B100">#E1DBBB</color>
     <color name="palette_A100">#ffffff</color>
     <color name="palette_A200">#ffffff</color>
     <color name="palette_A400">#ffffff</color>

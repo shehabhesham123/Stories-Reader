@@ -1,9 +1,7 @@
 package com.example.readerapp.feature.stories.ui.adapter
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.text.method.LinkMovementMethod
-import android.util.Log
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -23,7 +21,8 @@ class StoryDetailAdapter(
 ) :
     RecyclerView.Adapter<StoryDetailAdapter.ViewHolder>() {
 
-    private val pages = story.pages()
+    // now we split story body to pages and apply the title and body modifiers
+    private lateinit var pages: MutableList<Page>
 
     private var textSize = 16f
         set(value) {
@@ -32,99 +31,18 @@ class StoryDetailAdapter(
 
     private var textColor: Int? = null
     private var backgroundColor: Int? = null
-    private lateinit var context: Context
+    private lateinit var navigation: Navigation
+
+    // this recyclerView is needed to bookmark to make smoothScrollToPosition
     private lateinit var recyclerView: RecyclerView
-    private val navigation by lazy { Navigation(Authenticator.instance()) }
 
-    class ViewHolder(
-        private val mBinding: PageBinding,
-        private val listener: SelectionListener,
-    ) :
-        RecyclerView.ViewHolder(mBinding.root) {
-
-
-        fun bind(page: Page, textSize: Float, textColor: Int?, backgroundColor: Int?) {
-            putData(page)
-            setTextColor(page, textColor)
-            setBackgroundColor(backgroundColor)
-            setTextSize(textSize)
-            textSelection(page)
-            disableSelectionTools()
-            addBookmarkToSelectionToolbar()
-        }
-
-        private fun putData(page: Page) {
-            mBinding.pageBody.text = page.mss.spannableString
-            mBinding.pageNumber.text = page.number.toString()
-            mBinding.pageBody.movementMethod = LinkMovementMethod()
-        }
-
-        private fun setTextColor(page: Page, color: Int?) {
-            if (page.number == 1) {
-                // that's mean that this page contain title, and the title don't apply to change text color
-                mBinding.pageBody.text = page.mss.spannableString
-            } else {
-                color?.let {
-                    mBinding.pageBody.setTextColor(it)
-                }
-            }
-        }
-
-        private fun setBackgroundColor(color: Int?) {
-            color?.let { mBinding.background.setBackgroundColor(it) }
-        }
-
-        private fun setTextSize(textSize: Float) {
-            mBinding.pageBody.setTextSize(TypedValue.COMPLEX_UNIT_SP, textSize)
-        }
-
-        private fun textSelection(page: Page) {
-            mBinding.pageBody.viewTreeObserver.addOnPreDrawListener {
-
-                mBinding.pageBody.post {
-                    val start = mBinding.pageBody.selectionStart
-                    val end = mBinding.pageBody.selectionEnd
-                    val mss = page.mss
-                    if (start > -1 && end > 0 && start < end) {
-                        val lastModifier = try {
-                            mss.modifiers[mss.modifiers.size - 1]
-                        } catch (e: IndexOutOfBoundsException) {      // modifiers is empty
-                            null
-                        }
-                        if (lastModifier == null || lastModifier.modifierName != null) {
-                            Log.i("Hello", "1")
-                            val modifier = Modifier(start, end, null, null)
-                            mss.modifiers.add(modifier)
-                        } else {
-                            Log.i("Hello", "2")
-                            lastModifier.start = start
-                            lastModifier.end = end
-                        }
-                        listener.onSelectionListener(page)
-                    } else {
-                        listener.onUnSelectionListener()
-                    }
-                }
-                true // Return true to continue with the drawing process
-            }
-        }
-
-        private fun disableSelectionTools() {
-            mBinding.pageBody.setOnClickListener {
-                listener.onUnSelectionListener()
-            }
-        }
-
-        private fun addBookmarkToSelectionToolbar() {
-            mBinding.pageBody.customSelectionActionModeCallback = CustomActionMode(listener)
-        }
-
-    }
+    private var inFullScreenMode = false
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
-        context = recyclerView.context
         this.recyclerView = recyclerView
+        navigation = Navigation(Authenticator(recyclerView.context))
+        pages = story.pages(recyclerView, navigation)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -137,11 +55,10 @@ class StoryDetailAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-
-        holder.bind(pages[position], textSize, textColor, backgroundColor)
+        textSize += 0.00001f
+        holder.bind(pages[position], textSize, textColor, backgroundColor, inFullScreenMode)
     }
 
-    @SuppressLint("NotifyDataSetChanged")
     fun zoomIn() {
         textSize += 4
         notifyData()
@@ -153,19 +70,19 @@ class StoryDetailAdapter(
     }
 
     fun underline(page: Page) {
-        page.mss.underline()
+        page.mss.underline(true)
         listener.onUnSelectionListener()
         notifyData()
     }
 
     fun highlighter(page: Page) {
-        page.mss.highlighter()
+        page.mss.highlighter(true)
         listener.onUnSelectionListener()
         notifyData()
     }
 
     fun bold(page: Page) {
-        page.mss.bold()
+        page.mss.bold(true)
         listener.onUnSelectionListener()
         notifyData()
     }
@@ -205,6 +122,100 @@ class StoryDetailAdapter(
     private fun notifyData() {
         textSize += 0.0001f
         notifyDataSetChanged()
+    }
+
+    fun getRecyclerView() = recyclerView
+    fun fullScreenMode(inFullScreenMode: Boolean) {
+        this.inFullScreenMode = inFullScreenMode
+        notifyData()
+    }
+
+    class ViewHolder(
+        private val mBinding: PageBinding,
+        private val listener: SelectionListener,
+    ) :
+        RecyclerView.ViewHolder(mBinding.root) {
+
+        fun bind(
+            page: Page,
+            textSize: Float,
+            textColor: Int?,
+            backgroundColor: Int?,
+            inFullScreenMode: Boolean
+        ) {
+            putData(page, inFullScreenMode)
+            setTextColor(page, textColor)
+            setBackgroundColor(backgroundColor)
+            setTextSize(textSize)
+            textSelection(page)
+            disableSelectionTools()
+            addBookmarkToSelectionToolbar()
+        }
+
+        private fun putData(page: Page, inFullScreenMode: Boolean) {
+            mBinding.pageBody.text = page.mss.spannableString
+            mBinding.pageNumber.text = page.number.toString()
+            mBinding.pageBody.movementMethod = LinkMovementMethod()
+            mBinding.pageBody.setTextIsSelectable(!inFullScreenMode)
+        }
+
+        private fun setTextColor(page: Page, color: Int?) {
+            if (page.number == 1) {
+                // that's mean that this page contain title, and the title don't apply to change text color
+                mBinding.pageBody.text = page.mss.spannableString
+            } else {
+                color?.let {
+                    mBinding.pageBody.setTextColor(it)
+                }
+            }
+        }
+
+        private fun setBackgroundColor(color: Int?) {
+            color?.let { mBinding.background.setBackgroundColor(it) }
+        }
+
+        private fun setTextSize(textSize: Float) {
+            mBinding.pageBody.setTextSize(TypedValue.COMPLEX_UNIT_SP, textSize)
+        }
+
+        private fun textSelection(page: Page) {
+            mBinding.pageBody.viewTreeObserver.addOnPreDrawListener {
+                mBinding.pageBody.post {
+                    val start = mBinding.pageBody.selectionStart
+                    val end = mBinding.pageBody.selectionEnd
+                    val mss = page.mss
+                    if (start > -1 && end > 0 && start < end) {
+                        val lastModifier = try {
+                            mss.modifiers[mss.modifiers.size - 1]
+                        } catch (e: IndexOutOfBoundsException) {      // modifiers is empty
+                            null
+                        }
+                        if (lastModifier == null || lastModifier.modifierName != null) {
+                            val modifier = Modifier(start, end, null)
+                            mss.modifiers.add(modifier)
+                        } else {
+                            lastModifier.start = start
+                            lastModifier.end = end
+                        }
+                        listener.onSelectionListener(page)
+                    } else {
+                        listener.onUnSelectionListener()
+                    }
+                }
+                true // Return true to continue with the drawing process
+            }
+        }
+
+        private fun disableSelectionTools() {
+            mBinding.pageBody.setOnClickListener {
+                listener.onUnSelectionListener()
+            }
+        }
+
+        private fun addBookmarkToSelectionToolbar() {
+            mBinding.pageBody.customSelectionActionModeCallback = CustomActionMode(listener)
+        }
+
     }
 
 }

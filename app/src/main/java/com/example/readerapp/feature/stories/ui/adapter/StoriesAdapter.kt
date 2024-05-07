@@ -1,18 +1,28 @@
 package com.example.readerapp.feature.stories.ui.adapter
 
+import android.graphics.drawable.BitmapDrawable
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.ImageView
+import androidx.palette.graphics.Palette
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Adapter
+import com.example.readerapp.R
+import com.example.readerapp.core.network.NetworkHandler
 import com.example.readerapp.databinding.StoryBinding
 import com.example.readerapp.feature.stories.data.model.Story
+import com.squareup.picasso.Picasso
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
 
+@OptIn(DelicateCoroutinesApi::class)
 class StoriesAdapter(
-    stories: MutableList<Story>,
-    private val storyListener: StoryListener
-) :
-    Adapter<StoriesAdapter.ViewHolder>() {
+    stories: MutableList<Story>, private val storyListener: StoryListener
+) : Adapter<StoriesAdapter.ViewHolder>() {
 
     val stories: MutableList<Story> by Delegates.observable(stories) { _, _, _ ->
         notifyItemInserted(stories.size - 1)
@@ -22,7 +32,33 @@ class StoriesAdapter(
         RecyclerView.ViewHolder(mStoryBinding.root) {
         fun bind(story: Story) {
             mStoryBinding.title.text = story.title
-            //mStoryBinding.storyCover
+            if (NetworkHandler.isNetworkAvailable(mStoryBinding.root.context)) {
+                GlobalScope.launch(Dispatchers.IO) {
+                    putCover(story.cover!!, mStoryBinding.storyCover)
+                }
+            }
+        }
+
+        private suspend fun putCover(cover: String, coverView: ImageView) {
+            GlobalScope.launch(Dispatchers.Main) {
+                Picasso.get().load(cover).error(R.drawable.cover).into(mStoryBinding.storyCover)
+            }
+            delay(2000)
+            GlobalScope.launch(Dispatchers.Main) {
+                try {
+                    val bitmap = ((coverView.drawable) as BitmapDrawable).bitmap
+                    Palette.from(bitmap).maximumColorCount(32).generate {
+                        it?.let {
+                            val vibrant = it.vibrantSwatch
+                            val color = vibrant!!.rgb
+                            mStoryBinding.title.setTextColor(color)
+                        }
+                    }
+                } catch (e: Exception) {
+                    val color = coverView.resources.getColor(R.color.white, null)
+                    mStoryBinding.title.setTextColor(color)
+                }
+            }
         }
     }
 
@@ -42,5 +78,6 @@ class StoriesAdapter(
             storyListener.onClickListener(story)
         }
     }
+
 }
 

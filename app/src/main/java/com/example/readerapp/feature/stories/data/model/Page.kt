@@ -1,6 +1,6 @@
 package com.example.readerapp.feature.stories.data.model
 
-import com.example.readerapp.feature.stories.ui.ModifierSpannableString
+import com.example.readerapp.feature.stories.ui.activity.ModifierSpannableString
 
 class Page(
     mss: ModifierSpannableString,

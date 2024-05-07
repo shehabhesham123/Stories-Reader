@@ -2,7 +2,7 @@ package com.example.readerapp.feature.stories.data.model
 
 import com.google.gson.annotations.SerializedName
 
-class ModifierPage(val number: Int, val modifiers: List<Modifier>)
+class ModifierPage(val pageNumber: Int, val modifiers: List<Modifier>)
 
 class ModifierList() {
     @SerializedName("modifiers")

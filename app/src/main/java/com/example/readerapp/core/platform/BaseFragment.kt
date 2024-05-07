@@ -14,6 +14,18 @@ abstract class BaseFragment : Fragment() {
         if (this is BaseActivity) this.progressBar().visibility = viewStatus
     }
 
+    fun showAppbar() = appbarStatus(View.VISIBLE)
+
+    fun hideAppbar() = appbarStatus(View.GONE)
+
+    private fun appbarStatus(viewStatus: Int) = with(activity) {
+        if (this is BaseActivity) this.appbar().visibility = viewStatus
+    }
+
+    fun finish() = with(activity) {
+        if (this is BaseActivity) this.endTask()
+    }
+
     // MVI
     abstract fun sendAction(interaction: UseCase)
 

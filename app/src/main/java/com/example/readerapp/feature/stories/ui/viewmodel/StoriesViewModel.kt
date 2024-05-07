@@ -46,7 +46,6 @@ class StoriesViewModel : ViewModel() {
             interactionChannel.consumeAsFlow().buffer().collect {
                 viewStateChannel.send(Loading)
                 if (it is GetStories) {
-                    viewStateChannel.send(Loading)
                     // invoke
                     it(viewModelScope, viewStateChannel)
                 } else {

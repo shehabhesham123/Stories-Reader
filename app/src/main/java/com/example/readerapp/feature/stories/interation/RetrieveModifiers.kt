@@ -1,7 +1,6 @@
 package com.example.readerapp.feature.stories.interation
 
 import android.content.Context
-import android.util.Log
 import com.example.readerapp.core.extension.toPojo
 import com.example.readerapp.core.interation.UseCase
 import com.example.readerapp.core.stream.LocalStream
@@ -18,7 +17,7 @@ class RetrieveModifiers(private val context: Context, private val storyId: Strin
     override suspend fun run(scope: CoroutineScope, channel: Channel<ViewState>) {
         scope.launch {
             val localStream = LocalStream.instance()
-            val folderPath = context.getExternalFilesDir(null)
+            val folderPath = context.getExternalFilesDir(null)     // private file
             val file = localStream.getFile("$storyId.json", folderPath)
             if (file != null && file.exists()) {
                 val content = scope.async { localStream.readFileContent(file) }
@@ -34,7 +33,6 @@ class RetrieveModifiers(private val context: Context, private val storyId: Strin
 
     private fun getPojo(result: Any?): ViewState {
         val jsonString = result as String
-        Log.i("Hello", "$result ")
         val modifierList = String.toPojo(jsonString, ModifierList::class.java)
         return Success(modifierList)
     }

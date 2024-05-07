@@ -36,7 +36,13 @@ abstract class BaseActivity : AppCompatActivity() {
             .commit()
     }
 
+    abstract fun fragment(): Fragment
+
+
     fun progressBar() = mBinding.progressBar
 
-    abstract fun fragment(): Fragment
+    fun appbar() = mBinding.appbar
+
+    fun endTask() = finish()
+
 }

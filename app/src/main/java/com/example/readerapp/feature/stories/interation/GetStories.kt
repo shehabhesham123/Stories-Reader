@@ -47,6 +47,7 @@ class GetStories(
     }
 
     private fun getViewState(result: Any?): ViewState {
+        // if result is null, so may be the file not json or some thing occur when reading
         return if (result == null) Failure("No Data in this file")
         else getPojo(result)
     }

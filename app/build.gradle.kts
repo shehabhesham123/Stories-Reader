@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -41,7 +42,7 @@ android {
 
 dependencies {
 
-    implementation("androidx.core:core-ktx:1.13.0")
+    implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
@@ -56,7 +57,11 @@ dependencies {
     // color picker
     implementation("com.github.Dhaval2404:ColorPicker:2.3")
     // animation images
-    implementation("com.airbnb.android:lottie:3.4.0")
+    implementation("com.airbnb.android:lottie:6.4.0")
+    implementation("com.google.firebase:firebase-auth:22.3.1")
+    implementation("com.github.santalu:maskara:1.0.0")
+    implementation("com.squareup.picasso:picasso:2.71828")
+    implementation("androidx.palette:palette:1.0.0")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

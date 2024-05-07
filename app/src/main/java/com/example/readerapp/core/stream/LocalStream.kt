@@ -90,7 +90,7 @@ class LocalStream private constructor() {
         return stringBuilder.toString()
     }
 
-    suspend fun readFileContent(context: Context, file: Uri?): String? {
+    fun readFileContent(context: Context, file: Uri?): String? {
         val stringBuilder = StringBuilder()
         return if (file != null) {
             if (getFileExtension(file.path!!) != ".json") return null
@@ -106,7 +106,7 @@ class LocalStream private constructor() {
         } else null
     }
 
-    suspend fun getAllFiles(folder: File?): List<File> {
+    fun getAllFiles(folder: File?): List<File> {
         return if (folder != null && folder.isDirectory) {
             folder.listFiles()?.filter { it.isFile }?.toList()!!
         } else listOf()
@@ -116,7 +116,7 @@ class LocalStream private constructor() {
         return Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED
     }
 
-    fun getFileExtension(filePath: String): String {
+    private fun getFileExtension(filePath: String): String {
         var extension = ""
         try {
             extension = filePath.substring(filePath.lastIndexOf("."))
