@@ -68,7 +68,12 @@ class LoginFragment : BaseFragment() {
         val isPasswordValid = Validation.isPasswordValid(password)
 
         if (!isEmailValid) mBinding.email.error = "your email is not valid"
-        if (!isPasswordValid) mBinding.password.error = "your password is not valid"
+        if (!isPasswordValid) mBinding.password.error =
+            "your password must be at least 8 letters and contain \n" +
+                    "- at least one small letter \n" +
+                    "- at least one capital letter \n" +
+                    "- at least one number \n" +
+                    "- at least one of special character !@#$%^&*()_+-=[]{};':"
 
         return isEmailValid && isPasswordValid
     }
@@ -108,7 +113,7 @@ class LoginFragment : BaseFragment() {
     override fun successState(data: Any) {
         mBinding.loading.visibility = View.GONE
         mBinding.login.visibility = View.VISIBLE
-        navigation.showStoryDetails(requireContext(),true)
+        navigation.showStoryDetails(requireContext(), true)
         finish()
     }
 

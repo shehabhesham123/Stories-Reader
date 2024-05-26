@@ -10,6 +10,7 @@ import com.example.readerapp.feature.stories.data.model.Story
 import com.example.readerapp.feature.stories.viewstate.Failure
 import com.example.readerapp.feature.stories.viewstate.Success
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -34,7 +35,7 @@ class GetStories(
         because the downloaded story is displayed without waiting for the rest of the stories
     */
     private fun getStories(scope: CoroutineScope, channel: Channel<ViewState>) {
-        scope.launch {
+        scope.launch(Dispatchers.IO) {
             val localStream = LocalStream.instance()
             // to get each story individually
             for (i in stories) {

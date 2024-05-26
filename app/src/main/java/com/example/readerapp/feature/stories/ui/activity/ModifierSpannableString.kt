@@ -11,6 +11,7 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.ImageSpan
 import android.text.style.MetricAffectingSpan
 import android.text.style.UpdateAppearance
+import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.example.readerapp.R
@@ -192,10 +193,13 @@ class ModifierSpannableString(
     ): CharacterStyle {
         return object : ClickableSpan() {
             override fun onClick(p0: View) {
-                if (goTo is Int)
-                    recyclerView.smoothScrollToPosition(goTo)
-                else if (goTo is String) {
-                    navigation.showExternalUrl(goTo, recyclerView.context)
+                Log.i("Modifier Go to","$goTo")
+                when (goTo) {
+                    is Int -> recyclerView.scrollToPosition(goTo)
+                    is Double -> recyclerView.scrollToPosition(goTo.toInt())
+                    is String -> {
+                        navigation.showExternalUrl(goTo, recyclerView.context)
+                    }
                 }
             }
 
