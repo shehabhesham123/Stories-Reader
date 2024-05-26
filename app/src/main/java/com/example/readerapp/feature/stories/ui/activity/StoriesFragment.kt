@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -82,11 +83,15 @@ class StoriesFragment : BaseFragment(), StoryListener {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
             permission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
         }
+        permission(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            permission(android.Manifest.permission.MANAGE_EXTERNAL_STORAGE)
+        }
     }
 
     private fun permission(permissionName: String) {
         registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-            isPermissionGrant = isPermissionGrant && it
+            //isPermissionGrant = isPermissionGrant && it
         }.launch(permissionName)
     }
 
@@ -167,8 +172,11 @@ class StoriesFragment : BaseFragment(), StoryListener {
     }
 
     private fun startContentIntent() {
-        if (isPermissionGrant)
+        try {
             mActivityResultForGetContent.launch(mNavigation.getContentIntent())
+        } catch (e: Exception) {
+            requestPermissions()
+        }
     }
 
     private fun goToStoryDetailsActivity() {

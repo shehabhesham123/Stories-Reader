@@ -3,6 +3,7 @@ package com.example.readerapp.feature.stories.ui.activity
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.speech.tts.UtteranceProgressListener
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -69,6 +70,12 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
 
     private var inFullScreenMode = false
 
+    // when you use speech feature, when the page is ended, it will scroll to next page and speech it auto
+    // so i use pageView listener because if user scroll the page ---> turn off the speech
+    // so if i don't use autoScroll --> when the current page content is ended i auto scroll to next page
+    // and use it variable to disable to turn off speech
+    private var autoScroll = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -124,6 +131,8 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
                 override fun onStart(utteranceId: String?) {
                     if (utteranceId.equals("uniqueId")) {
                         GlobalScope.launch(Dispatchers.Main) {
+                            mSpeechButton.isEnabled = true
+                            mSpeechButton.setIcon(R.drawable.pause_speech)
                             idleState()
                         }
                     }
@@ -132,9 +141,16 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
                 override fun onDone(utteranceId: String?) {
                     if (utteranceId.equals("uniqueId")) {
                         GlobalScope.launch(Dispatchers.Main) {
-                            idleState()
-                            mSpeechButton.setIcon(R.drawable.speech)
-
+                            val pages = mStory.pages(null, null)
+                            if (mBinding.viewPager.currentItem != pages.size - 1) {
+                                autoScroll = true
+                                mAdapter.getRecyclerView()
+                                    .scrollToPosition(mBinding.viewPager.currentItem + 1)
+                            } else {
+                                idleState()
+                                mSpeechButton.isEnabled = true
+                                mSpeechButton.setIcon(R.drawable.speech)
+                            }
                         }
                     }
                 }
@@ -144,6 +160,7 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
                     if (utteranceId.equals("uniqueId")) {
                         GlobalScope.launch(Dispatchers.Main) {
                             failureState("Error")
+                            mSpeechButton.isEnabled = true
                             mSpeechButton.setIcon(R.drawable.speech)
                         }
                     }
@@ -283,12 +300,11 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
         }
 
         mSpeechButton.setOnMenuItemClickListener {
-            if (mTTs!!.isSpeaking) {
-                mTTs?.stopSpeech()
-                mSpeechButton.setIcon(R.drawable.speech)
-            }   // that's mean that the user click on pause speech
-            else {
-                if (mAuthenticator.isUserLogin()) {
+            if (mAuthenticator.isUserLogin()) {
+                if (mTTs!!.isSpeaking) {
+                    mTTs?.stopSpeech()
+                    mSpeechButton.setIcon(R.drawable.speech)
+                } else {
                     if (NetworkHandler.isNetworkAvailable(requireContext())) {
                         speech()
                     } else {
@@ -296,12 +312,11 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
                             requireContext(),
                             "No internet connection",
                             Toast.LENGTH_SHORT
-                        )
-                            .show()
+                        ).show()
                     }
-                } else {
-                    mNavigation.showSubscribeActivity(requireContext())
                 }
+            } else {
+                mNavigation.showSubscribeActivity(requireContext())
             }
             false
         }
@@ -348,7 +363,7 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
                 val queryObj = GlobalScope.async {
                     Query.query(query, mStory.body!!, color)
                 }
-                withContext(Dispatchers.Main){
+                withContext(Dispatchers.Main) {
                     mAdapter.query(queryObj.await())
                 }
             }
@@ -361,7 +376,7 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
 
     private fun speech() {
         loadingState()
-        mSpeechButton.setIcon(R.drawable.pause_speech)
+        mSpeechButton.isEnabled = false
         val pages = mStory.pages(null, null)
         val currentPage = pages[mBinding.viewPager.currentItem]
         mTTs?.startSpeech(currentPage.mss.spannableString.toString())
@@ -379,13 +394,13 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
         }
 
         mBinding.tools.highlighter.setCardBackgroundColor(
-            resources.getColor(android.R.color.transparent, null)
+            resources.getColor(R.color.transparent, null)
         )
         mBinding.tools.bold.setCardBackgroundColor(
-            resources.getColor(android.R.color.transparent, null)
+            resources.getColor(R.color.transparent, null)
         )
         mBinding.tools.underline.setCardBackgroundColor(
-            resources.getColor(android.R.color.transparent, null)
+            resources.getColor(R.color.transparent, null)
         )
 
 
@@ -443,12 +458,17 @@ class StoryDetailsFragment : BaseFragment(), SelectionListener {
     private fun onChangePageListener() {
         mBinding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
-                mTTs?.apply {
-                    if (isSpeaking) {
-                        stopSpeech()
-                        idleState()
-                        mSpeechButton.setIcon(R.drawable.speech)
+                if (!autoScroll) {
+                    mTTs?.apply {
+                        if (isSpeaking) {
+                            stopSpeech()
+                            idleState()
+                            mSpeechButton.setIcon(R.drawable.speech)
+                        }
                     }
+                } else {
+                    speech()
+                    autoScroll = false
                 }
             }
         })

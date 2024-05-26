@@ -10,6 +10,10 @@ import com.example.readerapp.core.navigation.Navigation
 import com.example.readerapp.feature.stories.data.model.Page.Companion.PAGE_TEXT_SIZE
 import com.example.readerapp.feature.stories.ui.activity.ModifierSpannableString
 import com.google.gson.annotations.SerializedName
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlin.math.ceil
 import kotlin.math.min
 
@@ -17,6 +21,7 @@ import kotlin.math.min
  * no constructor because we don't create new obj of story
  * and the obj will creating by Gson
  */
+@OptIn(DelicateCoroutinesApi::class)
 class Story {
 
     /////////////////////  properties //////////////////////////
@@ -98,11 +103,15 @@ class Story {
             val newEnd = i.end % PAGE_TEXT_SIZE
             if (pageNumber == page.number) {
                 if (i.goTo == null) {
-                    Log.i("TTTTT","${i.modifierName}")
                     modifiers.add(Modifier(newStart, newEnd, i.textColor, i.modifierName))
-                }
-                else {
-                    if (i.goTo is String) modifiers.add(Modifier(newStart, newEnd, i.goTo as String))
+                } else {
+                    if (i.goTo is String) modifiers.add(
+                        Modifier(
+                            newStart,
+                            newEnd,
+                            i.goTo as String
+                        )
+                    )
                     else if (i.goTo is Int) modifiers.add(Modifier(newStart, newEnd, i.goTo as Int))
                 }
             }
@@ -112,20 +121,22 @@ class Story {
 
     fun query(query: Query) {
         // cancel the current query then store this query in currentQuery
-        cancelCurrentQuery()
-        this.currentQuery = query
+        GlobalScope.launch(Dispatchers.IO) {
+            cancelCurrentQuery()
+            this@Story.currentQuery = query
 
-        for (i in query.indices) {
-            val page = i / PAGE_TEXT_SIZE + 1    // because first page for title
-            val start = i % PAGE_TEXT_SIZE
-            val highlightSpan = BackgroundColorSpan(query.highlightColor)
-            val pages = pages(null, null)
-            pages[page].mss.spannableString.setSpan(
-                highlightSpan,
-                start,
-                start + query.wordSize,
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
+            for (i in query.indices) {
+                val page = i / PAGE_TEXT_SIZE + 1    // because first page for title
+                val start = i % PAGE_TEXT_SIZE
+                val highlightSpan = BackgroundColorSpan(query.highlightColor)
+                val pages = pages(null, null)
+                pages[page].mss.spannableString.setSpan(
+                    highlightSpan,
+                    start,
+                    start + query.wordSize,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
         }
     }
 

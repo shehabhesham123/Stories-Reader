@@ -1,6 +1,7 @@
 package com.example.readerapp.feature.stories.ui.adapter
 
 import android.graphics.drawable.BitmapDrawable
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -32,18 +33,20 @@ class StoriesAdapter(
         RecyclerView.ViewHolder(mStoryBinding.root) {
         fun bind(story: Story) {
             mStoryBinding.title.text = story.title
-            if (NetworkHandler.isNetworkAvailable(mStoryBinding.root.context)) {
-                GlobalScope.launch(Dispatchers.IO) {
-                    putCover(story.cover!!, mStoryBinding.storyCover)
-                }
+            GlobalScope.launch(Dispatchers.IO) {
+                putCover(story.cover!!, mStoryBinding.storyCover)
             }
         }
 
         private suspend fun putCover(cover: String, coverView: ImageView) {
             GlobalScope.launch(Dispatchers.Main) {
-                Picasso.get().load(cover).error(R.drawable.cover).into(mStoryBinding.storyCover)
+                if (NetworkHandler.isNetworkAvailable(coverView.context)) {
+                    Picasso.get().load(cover).error(R.drawable.cover).into(mStoryBinding.storyCover)
+                } else {
+                    Picasso.get().load(R.drawable.cover).into(mStoryBinding.storyCover)
+                }
             }
-            delay(2000)
+            delay(1700)
             GlobalScope.launch(Dispatchers.Main) {
                 try {
                     val bitmap = ((coverView.drawable) as BitmapDrawable).bitmap

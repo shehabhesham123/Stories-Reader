@@ -1,7 +1,5 @@
 package com.example.readerapp.feature.stories.data.model
 
-import com.example.readerapp.R
-
 class Query private constructor(
     val indices: List<Int>,
     val wordSize: Int,
@@ -17,9 +15,11 @@ class Query private constructor(
                     var idx = i
                     var isValid = true
                     for (h in newWord) {
-                        if (h != body[idx++]) {
-                            isValid = false
-                        }
+                        if (idx < body.length) {
+                            if (h != body[idx++]) {
+                                isValid = false
+                            }
+                        } else isValid = false
                     }
                     if (isValid) indices.add(i)
                 }
