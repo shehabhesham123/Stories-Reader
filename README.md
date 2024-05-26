@@ -2,12 +2,18 @@
 
 <img src="screenshots/Mockup.png" alt="Customer Interface" height="500px">
 
+
 ## Overview
 The Story Reading App allows users to select stories from their phone files and provides a rich reading experience with various customization and interaction features. Users can adjust font sizes, change background and text colors, highlight text, add annotations, and more. The app also includes text-to-speech functionality and a discussion feature for collaborative reading.
 
-<img src="screenshots/Mockup2.png" alt="Customer Interface" height="500px">
 
 ## Features
+
+
+<img src="screenshots/Mockup2.png" alt="Customer Interface" height="500px">
+
+
+
 - **Story Selection:**
   - Choose stories from phone files.
   - View a collection of previously chosen stories in an organized and visually appealing manner.
@@ -28,9 +34,13 @@ The Story Reading App allows users to select stories from their phone files and 
   - Add comments and notes on specific parts of the text.
   - Annotate text with highlights and marks.
 
-<img src="screenshots/Mockup3.png" alt="Customer Interface" height="500px">
 
 ## Usage
+
+<img src="screenshots/Mockup3.png" alt="Customer Interface" height="500px">
+
+
+
 1. **Selecting a Story:**
 - Use the file browser to select a story from your phone’s storage.
 - View the selected stories in your library.
